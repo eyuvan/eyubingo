@@ -1,891 +1,291 @@
 <!DOCTYPE html>
-<html lang="am">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Habesha Bingo Bot Game</title>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <title>Habesha Bingo</title>
+    <script src="https://telegram.org"></script>
     <style>
         :root {
-            --primary: #e67e22;
-            --primary-dark: #d35400;
-            --secondary: #2c3e50;
-            --bg: #f5f6fa;
-            --card-bg: #ffffff;
-            --text: #2c3e50;
-            --text-light: #7f8c8d;
-            --success: #2ecc71;
-            --accent: #f1c40f;
+            --gold: #FFD700;
+            --dark-gold: #B8860B;
+            --bg: #121212;
+            --surface: #1E1E1E;
+            --text: #FFFFFF;
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-
         body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg);
             color: var(--text);
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
             display: flex;
             flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
         }
-
-        /* Top Banner & Stats */
-        .top-bar {
-            background: linear-gradient(135deg, var(--secondary), #1a252f);
-            color: white;
-            padding: 12px 16px;
+        /* Top Navigation Header */
+        header {
+            background-color: var(--surface);
+            padding: 10px 15px;
+            border-bottom: 2px solid var(--gold);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 13px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            z-index: 10;
-        }
-
-        .stat-group {
-            display: flex;
-            gap: 12px;
-        }
-
-        .stat-item {
-            background: rgba(255,255,255,0.1);
-            padding: 4px 8px;
-            border-radius: 4px;
-            border-left: 3px solid var(--accent);
-        }
-
-        .stat-label {
-            font-size: 10px;
-            color: var(--text-light);
-            text-transform: uppercase;
-        }
-
-        .stat-value {
-            font-weight: bold;
-        }
-
-        .timer-box {
-            background: #c0392b;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            animation: pulse 1s infinite alternate;
-        }
-
-        @keyframes pulse {
-            from { transform: scale(1); }
-            to { transform: scale(1.05); }
-        }
-
-        /* Main Content Container */
-        .main-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 16px;
-            padding-bottom: 80px;
-        }
-
-        .page {
-            display: none;
-        }
-
-        .page.active {
-            display: block;
-        }
-
-        /* Screen Title */
-        .screen-header {
-            margin-bottom: 15px;
-            font-size: 18px;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #ddd;
-            padding-bottom: 6px;
-        }
-
-        /* Game Lobby / Cartela Selection */
-        .cartela-selection-info {
-            background: #e8f4f8;
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 12px;
             font-size: 14px;
-            color: #2980b9;
-            border-left: 4px solid #2980b9;
         }
+        .header-item span {
+            color: var(--gold);
+            font-weight: bold;
+        }
+        #timer-display {
+            font-size: 20px;
+            color: #FF4500;
+            font-weight: bold;
+            background: rgba(255,69,0,0.1);
+            padding: 2px 8px;
+            border-radius: 5px;
+        }
+        /* Main Container */
+        .container {
+            flex: 1;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+        .screen { display: none; }
+        .active-screen { display: block; }
 
+        /* PHASE 1: Card Selection Grid */
         .grid-600 {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
             gap: 8px;
-            max-height: 400px;
+            max-height: 55vh;
             overflow-y: auto;
-            padding: 5px;
-            background: #eaeaea;
+            background: var(--surface);
+            padding: 10px;
             border-radius: 8px;
-            border: 1px solid #ccc;
+            border: 1px solid #333;
         }
-
-        .cartela-thumb {
-            background: white;
-            border: 2px solid #bdc3c7;
-            border-radius: 6px;
-            padding: 8px 4px;
+        .card-box {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            padding: 12px 5px;
             text-align: center;
             font-weight: bold;
             cursor: pointer;
-            transition: all 0.2s;
-            font-size: 13px;
+            border-radius: 4px;
+            transition: 0.2s;
         }
-
-        .cartela-thumb.selected {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary-dark);
-            transform: scale(0.95);
+        .card-box.selected {
+            background: var(--gold);
+            color: #000;
+            border-color: var(--dark-gold);
+            transform: scale(1.05);
         }
-
-        .cartela-thumb.disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .action-btn {
-            background: var(--primary);
-            color: white;
+        .btn {
+            background: linear-gradient(135deg, var(--gold), var(--dark-gold));
+            color: black;
             border: none;
             padding: 12px;
-            width: 100%;
-            border-radius: 8px;
+            font-weight: bold;
             font-size: 16px;
-            font-weight: bold;
+            border-radius: 5px;
             cursor: pointer;
+            width: 100%;
             margin-top: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
-        .action-btn:disabled {
-            background: #bdc3c7;
-            cursor: not-allowed;
-        }
-
-        /* 5x5 Play Board Area */
-        .game-id-banner {
-            background: #27ae60;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-weight: bold;
-            display: inline-block;
-            margin-bottom: 10px;
-        }
-
-        .live-screen {
-            background: #000;
-            color: #0f0;
-            padding: 12px;
-            border-radius: 6px;
-            font-family: monospace;
-            font-size: 18px;
-            text-align: center;
-            margin-bottom: 15px;
-            box-shadow: inset 0 0 10px rgba(0,255,0,0.5);
-            border: 2px solid #333;
-        }
-
-        .bingo-board-container {
+        /* PHASE 2: Live Game Screen */
+        .game-header {
             display: flex;
-            flex-direction: column;
-            gap: 20px;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
         }
-
-        .single-cartela-view {
-            background: var(--card-bg);
-            border: 3px solid var(--secondary);
-            border-radius: 8px;
-            padding: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-
-        .cartela-title {
-            text-align: center;
+        #game-id-display {
+            font-size: 18px;
             font-weight: bold;
-            margin-bottom: 6px;
-            color: var(--secondary);
-            font-size: 14px;
-            background: #f1f2f6;
-            padding: 2px;
-            border-radius: 4px;
+            color: var(--gold);
         }
-
-        .grid-5x5 {
+        #small-screen {
+            background: #000;
+            border: 2px solid var(--gold);
+            color: #00FF00;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 24px;
+            font-weight: bold;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-shadow: 0 0 10px #00FF00;
+        }
+        /* Bingo 5x5 Matrix Layout split by Letters */
+        .bingo-board {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 4px;
-        }
-
-        .bingo-cell {
-            background: #f8f9fa;
-            border: 1px solid #ddd;
-            aspect-ratio: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 14px;
-            cursor: pointer;
-            border-radius: 4px;
-            transition: background 0.2s;
-        }
-
-        .bingo-cell.free-space {
-            background: #ffeaa7;
-            font-size: 10px;
-            text-align: center;
-            color: #d63031;
-        }
-
-        .bingo-cell.called {
-            background: #ffeaa7;
-            border-color: #f1c40f;
-        }
-
-        .bingo-cell.marked {
-            background: #2ecc71 !important;
-            color: white;
-            border-color: #27ae60;
-        }
-
-        /* Bingo Pattern Checklist Table (B I N G O Master display) */
-        .master-board {
-            margin-top: 15px;
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 12px;
-        }
-
-        .master-board th {
-            background: var(--secondary);
-            color: white;
-            padding: 4px;
-            width: 8%;
-        }
-
-        .master-board td {
-            border: 1px solid #ccc;
-            padding: 4px;
-            background: white;
-        }
-
-        .master-numbers-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 3px;
-        }
-
-        .master-num {
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #eee;
-            border-radius: 3px;
-            font-size: 10px;
-            font-weight: bold;
-        }
-
-        .master-num.called {
-            background: var(--accent);
-            color: black;
-        }
-
-        /* Wallet Page */
-        .wallet-card {
-            background: linear-gradient(135deg, #34495e, #2c3e50);
-            color: white;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-        }
-
-        .wallet-balance-row {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 15px;
-        }
-
-        .wallet-input-group {
-            margin-top: 15px;
-        }
-
-        .wallet-input-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 14px;
-        }
-
-        .wallet-input-group input {
-            width: 100%;
+            gap: 10px;
+            background: var(--surface);
             padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 16px;
+            border-radius: 8px;
         }
-
-        /* History Page */
-        .history-list {
+        .bingo-col {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 5px;
         }
-
-        .history-item {
-            background: white;
-            padding: 12px;
-            border-radius: 8px;
-            border-left: 5px solid var(--primary);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        /* Profile Page */
-        .profile-detail-card {
-            background: white;
-            border-radius: 10px;
-            padding: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .profile-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px solid #eee;
-        }
-
-        .profile-row:last-child {
-            border-bottom: none;
-        }
-
-        .profile-label {
+        .col-letter {
+            text-align: center;
             font-weight: bold;
-            color: var(--text-light);
+            font-size: 20px;
+            background: var(--dark-gold);
+            color: black;
+            padding: 5px 0;
+            border-radius: 4px;
+        }
+        .bingo-cell {
+            background: #252525;
+            text-align: center;
+            padding: 8px 0;
+            font-size: 14px;
+            border-radius: 4px;
+            border: 1px solid #3a3a3a;
+        }
+        .bingo-cell.called {
+            background: #00FF00;
+            color: black;
+            font-weight: bold;
+            box-shadow: 0 0 8px #00FF00;
         }
 
-        /* Navigation Bar */
-        .nav-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 65px;
-            background: white;
+        /* Bottom Navigation Bar */
+        nav {
+            background-color: var(--surface);
+            border-top: 2px solid #333;
             display: flex;
             justify-content: space-around;
-            align-items: center;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-            z-index: 100;
+            padding: 10px 0;
         }
-
         .nav-item {
+            color: #888;
+            text-decoration: none;
+            font-size: 12px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            color: var(--text-light);
-            text-decoration: none;
-            font-size: 12px;
             cursor: pointer;
-            flex: 1;
-            height: 100%;
-            transition: color 0.2s;
         }
-
         .nav-item.active {
-            color: var(--primary);
+            color: var(--gold);
             font-weight: bold;
         }
-
-        .nav-icon {
-            font-size: 20px;
-            margin-bottom: 2px;
-        }
+        .nav-icon { font-size: 20px; margin-bottom: 2px; }
     </style>
 </head>
 <body>
 
-    <!-- Top Bar Component -->
-    <div class="top-bar">
-        <div class="stat-group">
-            <div class="stat-item">
-                <div class="stat-label">Stake</div>
-                <div class="stat-value" id="top-stake">100 ETB</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">Main</div>
-                <div class="stat-value" id="top-main-wallet">2,450 ETB</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">Play</div>
-                <div class="stat-value" id="top-play-wallet">350 ETB</div>
-            </div>
+    <!-- Top Status Header Info -->
+    <header>
+        <div class="header-item">Stake: <span id="stake-display">20 ETB</span></div>
+        <div class="header-item">Main: <span id="main-wallet-top">100.00</span></div>
+        <div class="header-item">Play: <span id="play-wallet-top">500.00</span></div>
+        <div id="timer-display">49s</div>
+    </header>
+
+    <!-- Main Screens View Router -->
+    <div class="container">
+        
+        <!-- Screen 1: Card Selection View (PHASE 1) -->
+        <div id="selection-screen" class="screen active-screen">
+            <h3 style="margin-top:0;">Select Cartela (Max 3)</h3>
+            <div class="grid-600" id="cards-container"></div>
+            <button class="btn" id="lock-btn" onclick="submitCardSelection()">Lock My Choices</button>
         </div>
-        <div class="timer-box" id="timer-box">
-            ⏱️ <span id="countdown">49</span>s
-        </div>
-    </div>
 
-    <!-- Main Dynamic Content Wrapper -->
-    <div class="main-container">
-
-        <!-- PAGE 1: GAME LOBBY / PLAY SCREEN -->
-        <div id="page-game" class="page active">
-            <!-- Phase A: Cartela Selection Panel -->
-            <div id="game-phase-selection">
-                <div class="screen-header">
-                    <span>🎰 ካርቴላ ይምረጡ (Select Cartela)</span>
-                </div>
-                <div class="cartela-selection-info">
-                    እባክዎ ከ 1 እስከ 600 ካርቴላዎች ውስጥ ይምረጡ። ቢያንስ 1፣ ቢበዛ ደግሞ 3 ካርቴላዎችን መምረጥ ይችላሉ።
-                </div>
-                <div class="grid-600" id="cartela-grid-container">
-                    <!-- Dynamic 600 items populated via JS -->
-                </div>
-                <button class="action-btn" id="confirm-selection-btn" disabled onclick="confirmCartelaSelection()">
-                    ምርጫዬን አረጋግጥ (Confirm Selection)
-                </button>
+        <!-- Screen 2: Live Interactive Bingo Screen (PHASE 2) -->
+        <div id="game-screen" class="screen">
+            <div class="game-header">
+                <div id="game-id-display">Game ID: #0001</div>
+                <div id="small-screen">WAIT</div>
             </div>
-
-            <!-- Phase B: Live Bingo 5x5 Board View -->
-            <div id="game-phase-play" style="display: none;">
-                <div class="screen-header">
-                    <span>🔴 የቀጥታ ጨዋታ (Live Match)</span>
-                    <div class="game-id-banner" id="game-id-display">Game ID: #0001</div>
-                </div>
-
-                <!-- Live Caller Display -->
-                <div class="live-screen" id="live-caller-screen">
-                    የመጀመሪያውን ቁጥር በመጠባበቅ ላይ...
-                </div>
-
-                <!-- 5x5 Bingo Cartelas Container -->
-                <div class="bingo-board-container" id="active-bingo-boards">
-                    <!-- Selected 5x5 tables appear here -->
-                </div>
-
-                <button class="action-btn" style="background:#27ae60;" id="bingo-claim-btn" onclick="claimBingo()">
-                    BINGO! (ቢንጎ በል)
-                </button>
-
-                <!-- Full Board Breakdown View -->
-                <table class="master-board">
-                    <thead>
-                        <tr>
-                            <th>B</th>
-                            <th>I</th>
-                            <th>N</th>
-                            <th>G</th>
-                            <th>O</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><div class="master-numbers-row" id="master-B"></div></td>
-                            <td><div class="master-numbers-row" id="master-I"></div></td>
-                            <td><div class="master-numbers-row" id="master-N"></div></td>
-                            <td><div class="master-numbers-row" id="master-G"></div></td>
-                            <td><div class="master-numbers-row" id="master-O"></div></td>
-                        </tr>
-                    </tbody>
-                </table>
+            <!-- B-I-N-G-O Grid Columns -->
+            <div class="bingo-board" id="bingo-matrix-board">
+                <!-- Columns get populated dynamically via Javascript logic -->
             </div>
         </div>
 
-        <!-- PAGE 2: WALLET -->
-        <div id="page-wallet" class="page">
-            <div class="screen-header">
-                <span>💳 የገንዘብ ቦርሳ (Wallet)</span>
-            </div>
-            <div class="wallet-card">
-                <h3>ጠቅላላ ቀሪ ሂሳብ</h3>
-                <h1 style="margin: 10px 0; color: var(--accent);" id="wallet-total-display">2,800.00 ETB</h1>
-                <div class="wallet-balance-row">
-                    <div>
-                        <span style="font-size:12px; color:#bdc3c7;">Main Wallet</span>
-                        <p style="font-weight:bold;" id="wallet-main-display">2,450.00 ETB</p>
-                    </div>
-                    <div>
-                        <span style="font-size:12px; color:#bdc3c7;">Play Wallet</span>
-                        <p style="font-weight:bold;" id="wallet-play-display">350.00 ETB</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="wallet-input-group">
-                <label>ወደ ጫወታ ቦርሳ ማዛወሪያ (Transfer to Play Wallet)</label>
-                <input type="number" id="transfer-amount" placeholder="የገንዘብ መጠን ያስገቡ...">
-                <button class="action-btn" style="background: var(--secondary);" onclick="executeTransfer()">ማዛወሪያ ፈፅም</button>
-            </div>
+        <!-- Screen 3: Wallet Panel -->
+        <div id="wallet-screen" class="screen">
+            <h3>💰 Wallet Management</h3>
+            <p>Main Balance: <strong id="main-wallet-details">100 ETB</strong></p>
+            <p>Play Balance: <strong id="play-wallet-details">500 ETB</strong></p>
+            <button class="btn" style="background:#555; color:white;">Deposit via Chapa</button>
         </div>
 
-        <!-- PAGE 3: HISTORY -->
-        <div id="page-history" class="page">
-            <div class="screen-header">
-                <span>📜 የጨዋታ ታሪክ (Game History)</span>
-            </div>
-            <div class="history-list">
-                <div class="history-item">
-                    <div>
-                        <strong>Game #0000</strong><br>
-                        <span style="font-size:12px; color:var(--text-light);">ቀን: 2026-10-05</span>
-                    </div>
-                    <span style="color:var(--success); font-weight:bold;">+500 ETB Win</span>
-                </div>
-                <div class="history-item">
-                    <div>
-                        <strong>Game #0000-Pre</strong><br>
-                        <span style="font-size:12px; color:var(--text-light);">ቀን: 2026-10-04</span>
-                    </div>
-                    <span style="color:#c0392b; font-weight:bold;">-100 ETB Lose</span>
-                </div>
-            </div>
+        <!-- Screen 4: History log -->
+        <div id="history-screen" class="screen">
+            <h3>📜 Game History</h3>
+            <p style="color:#aaa;">No past games played yet.</p>
         </div>
 
-        <!-- PAGE 4: PROFILE -->
-        <div id="page-profile" class="page">
-            <div class="screen-header">
-                <span>👤 መገለጫ (My Profile)</span>
-            </div>
-            <div class="profile-detail-card">
-                <div class="profile-row">
-                    <span class="profile-label">Telegram ID</span>
-                    <span id="prof-tg-id">@habesha_user_99</span>
-                </div>
-                <div class="profile-row">
-                    <span class="profile-label">Telephone</span>
-                    <span id="prof-phone">+251 912 345 678</span>
-                </div>
-                <div class="profile-row">
-                    <span class="profile-label">Main Wallet</span>
-                    <span id="prof-main-wallet" style="color:var(--secondary); font-weight:bold;">2,450 ETB</span>
-                </div>
-                <div class="profile-row">
-                    <span class="profile-label">Play Wallet</span>
-                    <span id="prof-play-wallet" style="color:var(--primary); font-weight:bold;">350 ETB</span>
-                </div>
-            </div>
+        <!-- Screen 5: Player Profile Panel -->
+        <div id="profile-screen" class="screen">
+            <h3>👤 Account Profile</h3>
+            <p>Telegram ID: <span id="prof-tg-id" style="color:var(--gold);">Loading...</span></p>
+            <p>Phone Number: <span id="prof-phone">Loading...</span></p>
+            <p>Play Account Balance: <span id="prof-play-wallet" style="color:var(--gold);">500 ETB</span></p>
         </div>
 
     </div>
 
-    <!-- Fixed Bottom Navigation Bar -->
-    <div class="nav-bar">
-        <div class="nav-item active" onclick="switchPage('game', this)">
-            <span class="nav-icon">🎮</span>
-            <span>Game</span>
-        </div>
-        <div class="nav-item" onclick="switchPage('wallet', this)">
-            <span class="nav-icon">💳</span>
-            <span>Wallet</span>
-        </div>
-        <div class="nav-item" onclick="switchPage('history', this)">
-            <span class="nav-icon">📜</span>
-            <span>History</span>
-        </div>
-        <div class="nav-item" onclick="switchPage('profile', this)">
-            <span class="nav-icon">👤</span>
-            <span>Profile</span>
-        </div>
-    </div>
+    <!-- Bottom Functional Navbar Fixed Menu -->
+    <nav>
+        <div class="nav-item active" onclick="switchTab('selection-screen', this)"><div class="nav-icon">🕹️</div>Game</div>
+        <div class="nav-item" onclick="switchTab('wallet-screen', this)"><div class="nav-icon">💳</div>Wallet</div>
+        <div class="nav-item" onclick="switchTab('history-screen', this)"><div class="nav-icon">📜</div>History</div>
+        <div class="nav-item" onclick="switchTab('profile-screen', this)"><div class="nav-icon">👤</div>Profile</div>
+    </nav>
 
     <script>
-        // Global Game State Mock Data
-        let state = {
-            mainWallet: 2450,
-            playWallet: 350,
-            stake: 100,
-            selectedCartelas: [],
-            gameId: 1,
-            countdownValue: 49,
-            gameTimerInterval: null,
-            calledNumbers: [],
-            cartelaDataMap: {} // Store matrix generation mappings for validation
-        };
+        // --- 🔗 CONFIGURATION & CONFIG COUPLING ---
+        const API_BASE_URL = "http://127.0.0.1:8000"; // Pointing directly to your FastAPI Server locally
+        
+        // Telegram WebApp Setup Integration
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+        
+        const telegramId = tg.initDataUnsafe?.user?.id || 123456789; // Default fallback for local testing browsers
+        let selectedCards = [];
+        const STAKE_PER_CARD = 20.0;
 
-        // Initialize App
-        window.addEventListener('DOMContentLoaded', () => {
-            renderCartelaGrid();
-            renderMasterBoardLayout();
-            startCountdown();
-            updateUIBalances();
-        });
-
-        function updateUIBalances() {
-            document.getElementById('top-main-wallet').innerText = `${state.mainWallet} ETB`;
-            document.getElementById('top-play-wallet').innerText = `${state.playWallet} ETB`;
-            document.getElementById('top-stake').innerText = `${state.stake} ETB`;
-            
-            // Wallet page
-            document.getElementById('wallet-total-display').innerText = `${state.mainWallet + state.playWallet}.00 ETB`;
-            document.getElementById('wallet-main-display').innerText = `${state.mainWallet}.00 ETB`;
-            document.getElementById('wallet-play-display').innerText = `${state.playWallet}.00 ETB`;
-
-            // Profile page
-            document.getElementById('prof-main-wallet').innerText = `${state.mainWallet} ETB`;
-            document.getElementById('prof-play-wallet').innerText = `${state.playWallet} ETB`;
+        // Render 1 to 600 Selection Catalog
+        const container = document.getElementById("cards-container");
+        for (let i = 1; i <= 600; i++) {
+            const box = document.createElement("div");
+            box.className = "card-box";
+            box.innerText = i;
+            box.onclick = () => selectCardBox(i, box);
+            container.appendChild(box);
         }
 
-        // Navigation Page Switching Logic
-        function switchPage(pageId, element) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-            
-            document.getElementById(`page-${pageId}`).classList.add('active');
-            element.classList.add('active');
-        }
-
-        // Render Selection Phase (1 to 600 Buttons)
-        function renderCartelaGrid() {
-            const grid = document.getElementById('cartela-grid-container');
-            grid.innerHTML = '';
-            for (let i = 1; i <= 600; i++) {
-                const thumb = document.createElement('div');
-                thumb.className = 'cartela-thumb';
-                thumb.innerText = `#${i}`;
-                thumb.onclick = () => selectCartelaThumb(i, thumb);
-                grid.appendChild(thumb);
-            }
-        }
-
-        function selectCartelaThumb(num, element) {
-            const index = state.selectedCartelas.indexOf(num);
-            if (index > -1) {
-                state.selectedCartelas.splice(index, 1);
-                element.classList.remove('selected');
+        function selectCardBox(num, element) {
+            if (element.classList.contains("selected")) {
+                element.classList.remove("selected");
+                selectedCards = selectedCards.filter(id => id !== num);
             } else {
-                if (state.selectedCartelas.length >= 3) {
-                    alert('ማስጠንቀቂያ፡ ማክሲመም መምረጥ የሚችሉት 3 ካርቴላ ብቻ ነው!');
+                if (selectedCards.length >= 3) {
+                    alert("You can choose up to 3 cards maximum!");
                     return;
                 }
-                state.selectedCartelas.push(num);
-                element.classList.add('selected');
+                element.classList.add("selected");
+                selectedCards.push(num);
             }
-
-            // Toggle verify confirmation button state
-            const btn = document.getElementById('confirm-selection-btn');
-            btn.disabled = state.selectedCartelas.length === 0;
         }
 
-        // Pre-confirm choice manually or automatically on countdown end
-        function confirmCartelaSelection() {
-            if(state.selectedCartelas.length === 0) {
-                // Auto pick random card if none selected
-                state.selectedCartelas.push(Math.floor(Math.random() * 600) + 1);
-            }
-            document.getElementById('game-phase-selection').style.display = 'none';
-            document.getElementById('game-phase-play').style.display = 'block';
-            renderActiveBingoBoards();
-            triggerLiveBingoCalls();
-        }
-
-        // Generate Bingo Matrix using standard rules
-        function generateBingoMatrix(seedValue) {
-            // Seed base setup for numbers segregation rules
-            const cols = { 'B': [], 'I': [], 'N': [], 'G': [], 'O': [] };
-            
-            const getRandomUniqueArr = (min, max, count) => {
-                let pool = [];
-                for(let i=min; i<=max; i++) pool.push(i);
-                pool.sort(() => Math.random() - 0.5);
-                return pool.slice(0, count);
-            };
-
-            cols['B'] = getRandomUniqueArr(1, 15, 5);
-            cols['I'] = getRandomUniqueArr(16, 30, 5);
-            cols['N'] = getRandomUniqueArr(31, 45, 5); // Index 2 will be free space
-            cols['G'] = getRandomUniqueArr(46, 60, 5);
-            cols['O'] = getRandomUniqueArr(61, 75, 5);
-
-            let matrix = [];
-            for(let row=0; row<5; row++) {
-                let rowData = [];
-                ['B','I','N','G','O'].forEach(letter => {
-                    rowData.push(cols[letter][row]);
-                });
-                matrix.push(rowData);
-            }
-            return matrix;
-        }
-
-        // Render standard 5x5 boards for user choices
-        function renderActiveBingoBoards() {
-            const container = document.getElementById('active-bingo-boards');
-            container.innerHTML = '';
-
-            state.selectedCartelas.forEach(cNum => {
-                const boardView = document.createElement('div');
-                boardView.className = 'single-cartela-view';
-                
-                const title = document.createElement('div');
-                title.className = 'cartela-title';
-                title.innerText = `ካርቴላ #${cNum}`;
-                boardView.appendChild(title);
-
-                const grid = document.createElement('div');
-                grid.className = 'grid-5x5';
-
-                const matrix = generateBingoMatrix(cNum);
-                state.cartelaDataMap[cNum] = matrix;
-
-                for(let r=0; r<5; r++) {
-                    for(let c=0; c<5; c++) {
-                        const cell = document.createElement('div');
-                        cell.className = 'bingo-cell';
-                        
-                        if(r === 2 && c === 2) {
-                            cell.className = 'bingo-cell free-space marked';
-                            cell.innerText = 'FREE';
-                        } else {
-                            const val = matrix[r][c];
-                            cell.innerText = val;
-                            cell.setAttribute('data-num', val);
-                            cell.onclick = () => {
-                                // Manual marker functionality toggle
-                                if(state.calledNumbers.includes(val)) {
-                                    cell.classList.toggle('marked');
-                                } else {
-                                    alert('ይህ ቁጥር እስካሁን አልተጠራም!');
-                                }
-                            };
-                        }
-                        grid.appendChild(cell);
-                    }
-                }
-                boardView.appendChild(grid);
-                container.appendChild(boardView);
-            });
-        }
-
-        // Setup the Master board list views (B: 1-15, I: 16-30 etc.)
-        function renderMasterBoardLayout() {
-            const configureRow = (elementId, min, max) => {
-                const target = document.getElementById(elementId);
-                for(let i=min; i<=max; i++) {
-                    const numDiv = document.createElement('div');
-                    numDiv.className = 'master-num';
-                    numDiv.id = `master-num-${i}`;
-                    numDiv.innerText = i;
-                    target.appendChild(numDiv);
-                }
-            };
-            configureRow('master-B', 1, 15);
-            configureRow('master-I', 16, 30);
-            configureRow('master-N', 31, 45);
-            configureRow('master-G', 46, 60);
-            configureRow('master-O', 61, 75);
-        }
-
-        // Start Lobby Pre-countdown
-        function startCountdown() {
-            const display = document.getElementById('countdown');
-            state.gameTimerInterval = setInterval(() => {
-                state.countdownValue--;
-                display.innerText = state.countdownValue;
-
-                if (state.countdownValue <= 0) {
-                    clearInterval(state.gameTimerInterval);
-                    document.getElementById('timer-box').style.background = '#27ae60';
-                    document.getElementById('timer-box').innerText = "LIVE 🟢";
-                    confirmCartelaSelection();
-                }
-            }, 1000);
-        }
-
-        // Simulate Live Bingo Calling Engine
-        function triggerLiveBingoCalls() {
-            // Reset state game attributes
-            document.getElementById('game-id-display').innerText = `Game ID: #${String(state.gameId).padStart(4, '0')}`;
-            
-            // Build full ball pool
-            let ballPool = [];
-            for(let i=1; i<=75; i++) ballPool.push(i);
-            ballPool.sort(() => Math.random() - 0.5);
-
-            let callIndex = 0;
-            const callInterval = setInterval(() => {
-                if(callIndex >= ballPool.length) {
-                    clearInterval(callInterval);
-                    return;
-                }
-
-                const currentBall = ballPool[callIndex];
-                state.calledNumbers.push(currentBall);
-                
-                // Determine Column Letter prefix
-                let letter = 'B';
-                if(currentBall >= 16 && currentBall <= 30) letter = 'I';
-                if(currentBall >= 31 && currentBall <= 45) letter = 'N';
-                if(currentBall >= 46 && currentBall <= 60) letter = 'G';
-                if(currentBall >= 61 && currentBall <= 75) letter = 'O';
-
-                // Display on Screen
-                document.getElementById('live-caller-screen').innerText = `📣 የተጠራው ቁጥር፡ ${letter} - ${currentBall}`;
-                
-                // Update Master board layout views
-                const masterNode = document.getElementById(`master-num-${currentBall}`);
-                if(masterNode) masterNode.classList.add('called');
-
-                // Auto match highlighting on active cell items to make game visually satisfying
-                document.querySelectorAll(`.bingo-cell[data-num="${currentBall}"]`).forEach(node => {
-                    node.classList.add('called');
-                    // Simulating helper tap automation
-                    node.classList.add('marked');
-                });
-
-                callIndex++;
-            }, 3000); // New number every 3 seconds
-        }
-
-        function claimBingo() {
-            // Trigger confetti effect on win request simulation
-            confetti({
-                particleCount: 150,
-                spread: 80,
-                origin: { y: 0.6 }
-            });
-            alert('🎉 እንኳን ደስ አለዎት! ቢንጎ በተሳካ ሁኔታ ተረጋግጧል።');
-        }
-
-        function executeTransfer() {
-            const val = parseInt(document.getElementById('transfer-amount').value);
-            if(!val || val <= 0) {
-                alert('ትክክለኛ የገንዘብ መጠን ያስገቡ');
-                return;
-            }
-            if(state.mainWallet < val) {
-                alert('በቂ ሂሳብ የሎትም!');
-                return;
-            }
-            state.mainWallet -= val;
-            state.playWallet += val;
-            updateUIBalances();
-            alert('ማዛወር በተሳካ ሁኔታ ተጠናቋል!');
-        }
-    </script>
-</body>
-</html>
+        // Fetch User Data from DB Profile Endpoints
+        async function loadProfile() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/profile/${telegramId}`);
+                if (res.ok) {
+                    const data = await res.json();
